@@ -102,6 +102,10 @@ Shader "Pema99/MercMarch"
                 // Union with a moving sphere for demonstration
                 dist = s_union((length(p + float3(-0.2, sin(_Time.y)*0.5, 0))-0.2), dist, 0.1);
 
+                // Box clamp
+                float3 q = abs(p) - (0.5-(1.0/volSize));
+                dist = max(dist, length(max(q, 0.0)) + min(max(q.x,max(q.y,q.z)),0.0));
+
                 return dist;
             }
 
