@@ -1,4 +1,4 @@
-﻿//
+﻿// This shader generates the distance texture from JFA output
 
 Shader "Pema99/JFA/JFADistance"
 {
