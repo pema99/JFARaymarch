@@ -52,7 +52,7 @@ Shader "Pema99/JFA/JFASeed"
             {
                 // Get coord in volume of current fragment
                 uint2 texCoord = i.uv * texSize;
-                uint3 volCoord = TexToVol(texCoord);
+                float3 volCoord = TexToVol(texCoord) + 0.5;
 
                 // Find corresponding depth values from each side of cube
                 float f = _Front[volCoord.xy].r;

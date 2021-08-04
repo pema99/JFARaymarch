@@ -61,31 +61,43 @@ Shader "Pema99/MercMarch"
                 return lerp( d2, d1, h ) - k*h*(1.0-h);
             }
 
+            // Perform trilinear interpolation
+            float trilerp (float3 p, float v[8])
+            {
+                float3 d = frac(p);
+
+                float c00 = lerp(v[0], v[0+4], d.x);
+                float c01 = lerp(v[1], v[1+4], d.x);
+                float c10 = lerp(v[2], v[2+4], d.x);
+                float c11 = lerp(v[3], v[3+4], d.x);
+
+                float c0 = lerp(c00, c10, d.y);
+                float c1 = lerp(c01, c11, d.y);
+
+                float c = lerp(c0, c1, d.z);
+
+                return c;
+            }
+
             float map(float3 p)
             {
                 // Scale space from [-0.5; 0.5] to [0; volSize]
-                float3 pp = p + 0.5;
+                float3 pp = saturate(p + 0.5);
                 float3 pv = pp * volSize;
-                
-                // Some kind of filtering, not really needed
-                /*float3 sum = 0;
-                for (int i = -1; i <= 1; i++)
-                {
-                    for (int j = -1; j <= 1; j++)
-                    {
-                        for (int k = -1; k <= 1; k++)
-                        {
-                            float2 tc = VolToTex(pv + int3(i, j, k)) / float(texSize);
-                            float3 val = tex2Dlod(_MainTex, float4(tc, 0, 0));
-                            sum += val * (1.0/27.0);
-                        }
-                    }
-                }*/
 
-                // Lookup seed, calculate distance
-                float2 tc = VolToTex(pv) / float(texSize);
-                float3 val = tex2Dlod(_MainTex, float4(tc, 0, 0));
-                float dist = distance(val, pp);
+                // Get weights for trilinear interpolation, and perform it to get distance
+                float v[8];
+                for (uint i = 0; i < 8; i++)
+                {
+                    uint x = (i & 4) >> 2;
+                    uint y = (i & 2) >> 1;
+                    uint z = (i & 1);
+
+                    float2 tc = VolToTex(pv + int3(x, y, z)) / float(texSize);
+                    float dist = tex2Dlod(_MainTex, float4(tc, 0, 0));
+                    v[i] = dist;
+                }
+                float dist = trilerp(pv, v);
 
                 // Union with a moving sphere for demonstration
                 dist = s_union((length(p + float3(-0.2, sin(_Time.y)*0.5, 0))-0.2), dist, 0.1);
@@ -112,7 +124,7 @@ Shader "Pema99/MercMarch"
                     float3 p = ro + rd * t;
                     float closest = map(p);
                     c = min(c, closest);
-                    t += closest * (i / _Iterations); // evil hack
+                    t += closest;
                     if(t > _MaxDist || closest < _Cutoff) break;
                 }
                 

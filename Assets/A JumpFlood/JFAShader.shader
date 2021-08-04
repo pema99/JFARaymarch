@@ -30,8 +30,6 @@ Shader "Pema99/JFA/JFAShader"
             };
 
             Texture2D _MainTex;
-            float4 _MainTex_TexelSize;
-
             int _Pass;
 
             v2f vert (appdata v)
@@ -45,11 +43,11 @@ Shader "Pema99/JFA/JFAShader"
             float3 frag (v2f i) : SV_Target
             {
                 // Get step size, half each time
-                int stepSize = pow(2, log2(_MainTex_TexelSize.z) - 1 - _Pass);
+                int stepSize = pow(2, log2(volSize) - 1 - _Pass);
 
                 // Calculate [0; 1] coordinate in volume of current fragment
                 uint2 texCoord = i.uv * texSize;
-                uint3 volCoord = TexToVol(texCoord);
+                float3 volCoord = TexToVol(texCoord) + 0.5;
                 float3 volUV = volCoord / float(volSize);
 
                 // Go through all 27 cells in neighborhood, find closest valid seed
