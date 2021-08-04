@@ -128,7 +128,7 @@ Shader "Pema99/MercMarch"
                     float3 p = ro + rd * t;
                     float closest = map(p);
                     c = min(c, closest);
-                    t += closest;
+                    t += closest * (i / _Iterations) // evil hack;
                     if(t > _MaxDist || closest < _Cutoff) break;
                 }
                 
